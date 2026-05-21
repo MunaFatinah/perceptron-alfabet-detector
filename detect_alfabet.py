@@ -64,19 +64,15 @@ def extract_hog_features(img_flat):
 def preprocess_roi(roi):
     """Ubah ROI kamera menjadi fitur untuk prediksi."""
     gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    
-    # Adaptive threshold untuk isolasi huruf
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    thresh = cv2.adaptiveThreshold(
-        blurred, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY_INV, 11, 4
-    )
-    
+
+    # Otsu threshold - otomatis nyesuain kecerahan
+    blurred = cv2.GaussianBlur(gray, (3, 3), 0)
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
     # Resize ke IMG_SIZE
     resized = cv2.resize(thresh, (IMG_SIZE, IMG_SIZE))
     normalized = resized.astype(np.float32) / 255.0
-    
+
     pixel_feat = normalized.flatten()
     hog_feat   = extract_hog_features(pixel_feat)
     return np.concatenate([pixel_feat, hog_feat]), thresh
